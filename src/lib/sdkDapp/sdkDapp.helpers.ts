@@ -9,6 +9,7 @@ export { getActiveTransactionsStatus } from '@multiversx/sdk-dapp/out/utils/tran
 export { getInterpretedTransaction } from '@multiversx/sdk-dapp/out/utils/transactions/getInterpretedTransaction';
 export { getTransactions } from '@multiversx/sdk-dapp/out/apiCalls/transactions/getTransactions';
 export { initApp } from '@multiversx/sdk-dapp/out/methods/initApp/initApp';
+export { nativeAuth } from '@multiversx/sdk-dapp/out/services/nativeAuth/nativeAuth';
 export { setAxiosInterceptors } from '@multiversx/sdk-dapp/out/utils/network/setAxiosInterceptors';
 export { signTransactions } from '@multiversx/sdk-dapp/out/providers/strategies/helpers/signTransactions/signTransactions';
 export { trimUsernameDomain } from '@multiversx/sdk-dapp/out/utils/account/trimUsernameDomain';

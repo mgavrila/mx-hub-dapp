@@ -1,2 +1,2 @@
-export * from './pingPong';
+export * from './getLoginToken';
 export * from './signAndSendTransactions';

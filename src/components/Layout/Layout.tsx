@@ -1,6 +1,5 @@
 import { PropsWithChildren } from 'react';
 import { AuthRedirectWrapper } from 'wrappers';
-import { Footer } from './Footer';
 import { Header } from './Header';
 
 export const Layout = ({ children }: PropsWithChildren) => {
@@ -10,7 +9,6 @@ export const Layout = ({ children }: PropsWithChildren) => {
       <main className='flex flex-grow items-stretch justify-center p-6'>
         <AuthRedirectWrapper>{children}</AuthRedirectWrapper>
       </main>
-      <Footer />
     </div>
   );
 };

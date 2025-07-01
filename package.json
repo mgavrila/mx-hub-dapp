@@ -13,6 +13,8 @@
     "@multiversx/sdk-dapp": "5.0.0-alpha.14",
     "@multiversx/sdk-dapp-ui": "0.0.8",
     "@multiversx/sdk-dapp-utils": "2.0.0",
+    "@multiversx/sdk-web-wallet-cross-window-provider": "3.1.0",
+    "@tanstack/react-query": "^5.81.5",
     "axios": "1.7.4",
     "classnames": "2.3.2",
     "moment": "2.29.4",
