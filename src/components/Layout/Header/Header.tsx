@@ -16,6 +16,12 @@ export const Header = () => {
     navigate(RouteNamesEnum.home);
   };
 
+  const isInIframe = window.self !== window.top;
+
+  if (isInIframe) {
+    return null;
+  }
+
   return (
     <header className='flex flex-row align-center justify-between pl-6 pr-6 pt-6'>
       <MxLink

@@ -1,60 +1,76 @@
-import { useState } from 'react';
+import { WebviewClient } from '@multiversx/sdk-dapp/out/providers/strategies/WebviewProviderStrategy/WebviewClient';
+import { useEffect, useState } from 'react';
 import { DappType, useGetHubDapps } from 'api';
-import { getLoginToken } from 'helpers';
-import {
-  Address,
-  getAccountProvider,
-  Message,
-  nativeAuth,
-  useGetAccount
-} from 'lib';
+
+const isIframe = window.self !== window.top;
+
+type HubDataType = {
+  groupedCategoryData: any[];
+};
 
 export const Dashboard = () => {
-  const { categories, categoryData, categoriesLoading, isCategoryDataLoading } =
-    useGetHubDapps();
+  const { groupedCategoryData } = useGetHubDapps({ enabled: !isIframe });
 
-  const { address } = useGetAccount();
-  const provider = getAccountProvider();
+  const [app, setApp] = useState<{ url: string } | null>(null);
+  const [exploreURL, setExploreURL] = useState('');
 
-  const [app, setApp] = useState<{ url: string; token: string } | null>(null);
+  const [hubData, setHubData] = useState<HubDataType | null>(null);
+
+  useEffect(() => {
+    if (isIframe) {
+      window.parent.postMessage(
+        { type: 'HUB_DATA_REQUEST' },
+        'https://localhost:3002'
+      );
+    }
+
+    const webviewClient = new WebviewClient({
+      onLoginCancelled: async () => {
+        setApp(null);
+      }
+    });
+    webviewClient.registerEvent('HUB_DATA_RESPONSE', (event) => {
+      const { groupedHubApplications } = event.data.payload;
+      setHubData({ groupedCategoryData: groupedHubApplications });
+    });
+
+    webviewClient.startListening();
+
+    return () => {
+      webviewClient.stopListening();
+    };
+  }, []);
 
   const onAppClick = async (dapp: DappType) => {
-    const origin = new URL(dapp.url).origin;
-
-    const loginToken = await getLoginToken(origin);
-
-    const messageToSign = new Message({
-      address: new Address(address),
-      data: new Uint8Array(Buffer.from(`${loginToken}`))
-    });
-
-    const signedMessageResult = await provider.signMessage(messageToSign);
-
-    const nativeAuthClient = nativeAuth({
-      origin,
-      expirySeconds: 3600
-    });
-
-    const nativeAuthToken = nativeAuthClient.getToken({
-      address,
-      token: loginToken,
-      signature: Buffer.from(signedMessageResult?.signature ?? '').toString(
-        'hex'
-      )
-    });
-
-    setApp({ token: nativeAuthToken, url: origin });
+    signToken(dapp.url);
   };
 
-  if (!categories || categoriesLoading || isCategoryDataLoading) {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setExploreURL(e.target.value);
+  };
+
+  const signToken = async (url: string) => {
+    const origin = new URL(url).origin;
+
+    setApp({ url: origin });
+  };
+
+  const onExplore = async () => {
+    signToken(exploreURL);
+  };
+
+  const dappData = isIframe
+    ? hubData?.groupedCategoryData ?? []
+    : groupedCategoryData ?? [];
+
+  if (!dappData) {
     return (
       <div className='p-4 text-gray-600'>Loading categories and dapps...</div>
     );
   }
 
-  if (app?.token && app.url) {
+  if (app?.url) {
     const iframeSourceURL = new URL(app.url);
-    iframeSourceURL.searchParams.set('accessToken', app.token);
 
     const iframeSource = iframeSourceURL.toString();
 
@@ -89,16 +105,35 @@ export const Dashboard = () => {
 
   return (
     <div className='flex flex-col gap-10 max-w-5xl w-full mx-auto p-4'>
-      {categories.map((cat, index) => {
-        const dapps = categoryData[index];
+      <div className='flex gap-2 items-center'>
+        <input
+          type='text'
+          placeholder='Enter the URL of any dApp'
+          onChange={handleInputChange}
+          value={exploreURL}
+          className='w-full px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500'
+        />
+        <button
+          className='px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors'
+          onClick={onExplore}
+        >
+          Explore
+        </button>
+      </div>
+      {Object.entries(dappData).map(([categoryKey, dapps]) => {
+        // categoryKey is like "1_multiversx"
+        // split it if you want to show category name separately
+        const categoryName = categoryKey.split('_').slice(1).join('_');
 
         return (
-          <div key={cat.id} className='flex flex-col gap-4'>
-            <h2 className='text-2xl font-semibold capitalize'>{cat.name}</h2>
+          <div key={categoryKey} className='flex flex-col gap-4'>
+            <h2 className='text-2xl font-semibold capitalize'>
+              {categoryName}
+            </h2>
 
             {dapps && dapps.length > 0 ? (
               <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4'>
-                {dapps.map((dapp) => (
+                {dapps.map((dapp: DappType) => (
                   <button
                     key={dapp.id}
                     onClick={() => onAppClick(dapp)}

@@ -2,6 +2,12 @@ import { useQueries, useQuery, UseQueryResult } from '@tanstack/react-query';
 import axios from 'axios';
 import { API_URL } from 'config';
 
+export type CategoryType = {
+  id: number;
+  name: string;
+  order: number;
+};
+
 export type DappType = {
   id: number;
   name: string;
@@ -19,13 +25,7 @@ export type DappType = {
   }[];
 };
 
-type Category = {
-  id: number;
-  name: string;
-  order: number;
-};
-
-const fetchCategories = async (): Promise<Category[]> => {
+const fetchCategories = async (): Promise<CategoryType[]> => {
   const res = await axios.get(
     `${API_URL}/xportal-common-api/api/v1/dapps/categories`,
     {
@@ -45,16 +45,17 @@ const fetchCategoryData = async (id: number): Promise<DappType[]> => {
   return res.data ?? [];
 };
 
-export const useGetHubDapps = () => {
+export const useGetHubDapps = ({ enabled }: { enabled: boolean }) => {
   const {
     data: categories,
     isLoading: categoriesLoading,
     isError: categoriesError,
     error: categoriesErrorObj
-  } = useQuery<Category[], Error>({
+  } = useQuery<CategoryType[], Error>({
     queryKey: ['hubCategories'],
     queryFn: fetchCategories,
-    staleTime: 1000 * 60 * 5
+    staleTime: 1000 * 60 * 5,
+    enabled
   });
 
   const categoryDataQueries = useQueries<UseQueryResult<DappType[]>[]>({
@@ -63,7 +64,7 @@ export const useGetHubDapps = () => {
         queryKey: ['categoryData', category.id],
         queryFn: () => fetchCategoryData(category.id),
         staleTime: 1000 * 60 * 5,
-        enabled: !!categories
+        enabled: !!categories && enabled
       })) || []
   });
 
@@ -73,12 +74,25 @@ export const useGetHubDapps = () => {
     .filter((q) => q.isError)
     .map((q) => q.error);
 
+  const groupedCategoryData = categoryDataQueries
+    .flatMap((q) => q.data ?? [])
+    .reduce(
+      (acc, dapp) => {
+        const key = `${dapp.categoryId}_${dapp.categoryName.toLowerCase()}`;
+        if (!acc[key]) acc[key] = [];
+        acc[key].push(dapp);
+        return acc;
+      },
+      {} as Record<string, DappType[]>
+    );
+
   return {
     categories,
     categoriesLoading,
     categoriesError,
     categoriesErrorObj,
-    categoryData: categoryDataQueries.map((q) => q.data),
+    groupedCategoryData,
+    categoryData: categoryDataQueries.flatMap((q) => q.data ?? []),
     isCategoryDataLoading,
     isCategoryDataError,
     categoryDataErrors

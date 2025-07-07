@@ -6,7 +6,6 @@ export const AxiosInterceptors = ({ children }: PropsWithChildren) => {
   const { tokenLogin } = useGetLoginInfo();
 
   useEffect(() => {
-    console.log('setting interceptors', tokenLogin, sampleAuthenticatedDomains);
     setAxiosInterceptors({
       authenticatedDomains: sampleAuthenticatedDomains,
       bearerToken: tokenLogin?.nativeAuthToken
