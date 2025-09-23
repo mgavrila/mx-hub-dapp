@@ -1,7 +1,7 @@
 import './styles/globals.css';
 
-import { walletConnectV2ProjectId } from 'config';
-import { EnvironmentsEnum, ICustomProvider, InitAppType } from './lib';
+import { walletConnectV2ProjectId, environment } from 'config';
+import { ICustomProvider, InitAppType } from './lib';
 import { InMemoryProvider } from './provider/inMemoryProvider';
 
 const providers: ICustomProvider[] = [
@@ -21,7 +21,7 @@ export const config: InitAppType = {
   storage: { getStorageCallback: () => sessionStorage },
   dAppConfig: {
     nativeAuth: true,
-    environment: EnvironmentsEnum.devnet,
+    environment,
     providers: {
       walletConnect: {
         walletConnectV2ProjectId
